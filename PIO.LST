@@ -1,4 +1,4 @@
-  Fri Aug 10 2012 16:35                                                                                                  Page    1
+  Wed Sep  5 2012 11:07                                                                                                  Page    1
 
 
 
@@ -14,7 +14,7 @@
 
 
     1                         	;自由課題PIO割り込みルーチン部
-    2                         	;担当:山下峻
+    2                         	;
     3                         	;
     4                         	;----------EXTERN----------
     5                         		.EXTERN	LED
@@ -30,97 +30,71 @@
    15                         	;----------GLOBAL----------
    16                         		.GLOBAL	IPIO
    17                         		.GLOBAL	PAINT
-   18                         		.GLOBAL	CHSW
-   19                         	;
-   20                         	;----------PIO割り込みルーチン----------
-   21  8400                   		ORG	8400H
-   22                         	;
-   23  8400   F5              	PAINT:	PUSH	AF
-   24  8401   C5              		PUSH	BC
-   25  8402   D5              		PUSH	DE
-   26  8403   F3              		DI			;割り込み禁止
-   27  8404   3E FF           		LD	A,0FFH		;PBポートのLEDを
-   28  8406   D3 00           		OUT	(PBDR),A	;全て点灯
-   29                         	;
-   30  8408   3A 00 00        		LD	A,(BAT)
-   31  840B   FE 04           		CP	4		;バッテリーの値が3以下か判定、(BAT)<4ならCフラグが立つ
-   32  840D   D2 15 84        		JP	NC,LED0		;バッテリーの値が9~4の場合LEDを全て消灯
-   33  8410   3E 01           	LED1:	LD	A,01H		;バッテリーの値が3~0の場合LSBのLEDのみ点灯
-   34  8412   C3 17 84        		JP	LEDOUT1
-   35  8415   3E 00           	LED0:	LD	A,00H
-   36  8417   D3 00           	LEDOUT1:OUT	(LED),A
-   37                         	;
-   38  8419   CD 00 00        	MSGDISP:CALL	OUTMSG3		;メッセージ出力
-   39  841C   06 64           		LD	B,100
-   40  841E   0E 0F           		LD	C,0FH		;ブザーを約2秒間鳴らす
-   41  8420   CD 00 02        		CALL	0200H		;システムコール
-   42                         	;
-   43  8423   DB 00           	PIOLOOP:IN	A,(PADR)	;SW0が"L"になるまで
-   44  8425   CB 47           		BIT	0,A		;無限ループ
-   45  8427   C2 23 84        		JP	NZ,PIOLOOP	;
-   46                         	;
-   47  842A   CD 69 84        		CALL	CHSW		;チャタリング対策ルーチン
-  Fri Aug 10 2012 16:35                                                                                                  Page    2
+   18                         	;
+   19                         	;----------PIO割り込みルーチン----------
+   20  8400                   		ORG	8400H
+   21                         	;
+   22  8400   F5              	PAINT:	PUSH	AF
+   23  8401   C5              		PUSH	BC
+   24  8402   D5              		PUSH	DE
+   25  8403   F3              		DI			;割り込み禁止
+   26                         	;
+   27  8404   3A 00 00        		LD	A,(BAT)
+   28  8407   FE 04           		CP	4		;バッテリーの値が3以下か判定、(BAT)<4ならCフラグが立つ
+   29  8409   D2 11 84        		JP	NC,LED0		;バッテリーの値が9~4の場合LEDを全て消灯
+   30  840C   3E 01           	LED1:	LD	A,01H		;バッテリーの値が3~0の場合LSBのLEDのみ点灯
+   31  840E   C3 13 84        		JP	LEDOUT1
+   32  8411   3E 00           	LED0:	LD	A,00H
+   33  8413   D3 00           	LEDOUT1:OUT	(LED),A
+   34                         	;
+   35  8415   CD 00 00        	MSGDISP:CALL	OUTMSG3		;メッセージ出力
+   36  8418   06 64           		LD	B,100		;2000[msec]=2[sec]
+   37  841A   0E 0F           		LD	C,0FH		;ブザーを約2秒間鳴らす
+   38  841C   CD 00 02        		CALL	0200H		;システムコール
+   39                         	;
+   40  841F   DB 00           	PIOLOOP:IN	A,(PADR)	;SW0が"L"になるまで
+   41  8421   CB 47           		BIT	0,A		;無限ループ
+   42  8423   C2 1F 84        		JP	NZ,PIOLOOP	;
+   43                         	;
+   44  8426   3E 00           		LD	A,00H
+   45  8428   32 00 00        		LD	(SPEED),A	;SPEEDの値を00Hに初期化
+   46  842B   0E 08           	LEDOUT2:LD	C,08H		;ルーチン実行時に
+   47  842D   CD 00 02        		CALL	0200H		;LCD画面をクリア
+  Wed Sep  5 2012 11:07                                                                                                  Page    2
 
 
 
 
-   48  842D   3E 00           		LD	A,00H
-   49  842F   32 00 00        		LD	(SPEED),A	;SPEEDの値を00Hに初期化
-   50  8432   0E 08           	LEDOUT2:LD	C,08H		;ルーチン実行時に
-   51  8434   CD 00 02        		CALL	0200H		;LCD画面をクリア
-   52  8437   CD 00 00        		CALL	OUTMSG1
-   53  843A   3A 00 00        		LD	A,(BAT)
-   54  843D   0E 04           		LD	C,04H
-   55  843F   CD 00 02        		CALL	0200H
-   56  8442   D1              		POP	DE
-   57  8443   C1              		POP	BC
-   58  8444   F1              		POP	AF
-   59  8445   FB              		EI
-   60  8446   ED 4D           		RETI
-   61                         	;
-   62                         	;----------PIO設定初期化ルーチン----------
-   63  8448   3E CF           	IPIO:	LD	A,11001111B	;@PB:Mode3(bit-mode)
-   64  844A   D3 00           		OUT	(PBCR),A
-   65  844C   3E 00           		LD	A,00000000B	;@PB:All bit output
-   66  844E   D3 00           		OUT	(PBCR),A
-   67  8450   3E 07           		LD	A,00000111B	;@PB:Interrupt OFF
-   68  8452   D3 00           		OUT	(PBCR),A
-   69                         	;
-   70  8454   3E CF           		LD	A,11001111B	;@PA:Mode3(bit-mode)
-   71  8456   D3 00           		OUT	(PACR),A
-   72  8458   3E FF           		LD	A,11111111B	;@PA:All bit input
-   73  845A   D3 00           		OUT	(PACR),A
-   74  845C   3E B7           		LD	A,10110111B	;@PA:Interrupt ON,AND cul,Active "H"
-   75  845E   D3 00           		OUT	(PACR),A
-   76  8460   3E FE           		LD	A,11111110B	;@PA:0bit & 1bit Interrupt ON
-   77  8462   D3 00           		OUT	(PACR),A
-   78  8464   3E 08           		LD	A,08H
-   79  8466   D3 00           		OUT	(PACR),A
-   80  8468   C9              		RET
-   81                         	;
-   82                         	;----------トグルスイッチのチャタリング対策ルーチン----------
-   83  8469   F5              	CHSW:	PUSH	AF
-   84  846A   C5              		PUSH	BC
-   85  846B   D5              		PUSH	DE
-   86  846C   DB 00           	CHLOOP:	IN	A,(PADR)
-   87  846E   E6 01           		AND	01H
-   88  8470   20 FA           		JR	NZ,CHLOOP
-   89  8472   11 E8 03        		LD	DE,1000
-   90  8475   0E 0E           		LD	C,0EH
-   91  8477   CD 00 02        		CALL	0200H
-   92  847A   D1              		POP	DE
-   93  847B   C1              		POP	BC
-   94  847C   F1              		POP	AF
-   95  847D   C9              		RET
-   96                         	;
-   97                         	;
-   98  847E                   	END
-   99                         	
+   48  8430   CD 00 00        		CALL	OUTMSG1
+   49  8433   3A 00 00        		LD	A,(BAT)
+   50  8436   0E 04           		LD	C,04H
+   51  8438   CD 00 02        		CALL	0200H
+   52  843B   D1              		POP	DE
+   53  843C   C1              		POP	BC
+   54  843D   F1              		POP	AF
+   55  843E   FB              		EI
+   56  843F   ED 4D           		RETI
+   57                         	;
+   58                         	;----------PIO設定初期化ルーチン----------
+   59  8441   3E CF           	IPIO:	LD	A,11001111B	;@PA:Mode3(bit-mode)
+   60  8443   D3 00           		OUT	(PACR),A
+   61  8445   3E FF           		LD	A,11111111B	;@PA:All bit input
+   62  8447   D3 00           		OUT	(PACR),A
+   63  8449   3E B7           		LD	A,10110111B	;@PA:Interrupt ON,OR cul,Active "H"
+   64  844B   D3 00           		OUT	(PACR),A
+   65  844D   3E FE           		LD	A,11111110B	;@PA:0bit & 1bit Interrupt ON
+   66  844F   D3 00           		OUT	(PACR),A
+   67  8451   3E 08           		LD	A,08H
+   68  8453   D3 00           		OUT	(PACR),A
+   69  8455   C9              		RET
+   70                         	;
+   71                         	;
+   72  8456                   	END
+   73                         	
 
 
 
-           Lines Assembled :  99             Assembly Errors :  0
+           Lines Assembled :  73             Assembly Errors :  0
 
 
 
